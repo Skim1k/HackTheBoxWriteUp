@@ -4,9 +4,6 @@ Hi! Welcome to repo with HackTheBox machines's walkthrough!
 I hope these walkthroughs will help you become stronger in attacks and DFIR.
 Good luck!
 
-Привет! Добро пожаловать в репозиторий с прохождениями машин/задач на HackTheBox!
-Надеюсь, эти подсказки помогут вам стать сильнее в атаках и DFIR.
-Удачи!
 
 
 #╔╗─╔╗─────╔╗╔════╦╗────╔══╗───────╔╗╔╗╔╗──╔╗───╔╗─╔╗
@@ -18,6 +15,6 @@ Good luck!
 #───────────────────────────────────────────────────║║
 #───────────────────────────────────────────────────╚╝
 
-🅵🆁🅾🅼 🆁🆄🆂🆂🅸🅰 🆆🅸🆃🅷 🅻🅾🆅🅴
-#hackthebox walkthrough
+#hack the box walkthrough
+#hack the box write up
 (─‿‿─)
